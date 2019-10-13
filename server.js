@@ -1,29 +1,31 @@
-/*
-var express = require('express');
-var route = require('./routes/route');
-var tweets = require('./routes/tweets');
-require('./db/mongoose');
-
-// Create a new Express application.
-var app = express();
-
-// Configure view engine to render EJS templates.
-app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
-
-app.use(route);
-app.use(tweets);
-
-app.listen(process.env['PORT'] || 8080);
-
-*/
-
 require('dotenv').config();
 
 var express = require('express');
 var passport = require('passport');
 var Strategy = require('passport-twitter').Strategy;
 
+var Twitter = require('twitter');
+const getBearerToken = require('get-twitter-bearer-token');
+ 
+const twitter_consumer_key = 'gXPyrnjJjgoCRFgSmYqddTWJn'
+const twitter_consumer_secret = 'bgZNCMCRxh9H1JWD81LszldLpYy9ark3SI6cH6cwWkU8eY5BQH'
+var twitter_bearer_token = 'AAAAAAAAAAAAAAAAAAAAAGFMAQEAAAAA7uT%2FMu9xDTxSmaBTUOh0R2UzCqw%3DLS7GbuJGoBHhG7QfWr3BZaKZzxZcDIAfuxv3Qr1cvRjSQ16U5P';
+ 
+getBearerToken(twitter_consumer_key, twitter_consumer_secret, (err, res) => {
+  if (err) {
+    // handle error
+  } else {
+  
+    // bearer token
+    twitter_bearer_token = res.body.access_token;
+  }
+});
+
+var client = new Twitter({
+  consumer_key: twitter_consumer_key,
+  consumer_secret: twitter_consumer_secret,
+  bearer_token: twitter_bearer_token
+});
 
 var trustProxy = false;
 if (process.env.DYNO) {
@@ -105,9 +107,7 @@ app.get('/profile',
         res.render('tweets', { tweets: tweets.statuses });
         //res.send({tweets: tweets.statuses});
      });
-      
     }
-    
 );
 
 app.get('/logout',
