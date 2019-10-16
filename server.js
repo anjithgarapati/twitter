@@ -3,6 +3,7 @@ require('dotenv').config();
 var express = require('express');
 var passport = require('passport');
 var Strategy = require('passport-twitter').Strategy;
+const LOG = require('./models/log');
 
 var Twitter = require('twitter');
 const getBearerToken = require('get-twitter-bearer-token');
@@ -26,6 +27,7 @@ var client = new Twitter({
   consumer_secret: twitter_consumer_secret,
   bearer_token: twitter_bearer_token
 });
+
 
 var trustProxy = false;
 if (process.env.DYNO) {
@@ -85,12 +87,20 @@ app.get('/login',
     res.render('login');
   });
 
+  app.get('/logs', async (req, res) => {
+    const logs = await Log.find({});
+
+    res.render('logs', {logs});
+  })
+
 app.get('/login/twitter',
   passport.authenticate('twitter'));
 
 app.get('/oauth/callback',
   passport.authenticate('twitter', { failureRedirect: '/login' }),
-  function(req, res) {
+  async function(req, res) {
+    const log = new LOG({details: req.user.username + ' loggedin'});
+    await log.save();
     res.redirect('/');
   });
 
@@ -103,7 +113,9 @@ app.get('/profile',
   app.get('/tweets', 
     require('connect-ensure-login').ensureLoggedIn(),
     (req, res) => {
-      client.get('search/tweets', {q: '#ios #swift'}, function(error, tweets, response) {
+      client.get('search/tweets', {q: '#ios #swift'}, async function(error, tweets, response) {
+        const log = new LOG({details: 'Accessed tweets'});
+        await log.save();
         res.render('tweets', { tweets: tweets.statuses });
         //res.send({tweets: tweets.statuses});
      });
